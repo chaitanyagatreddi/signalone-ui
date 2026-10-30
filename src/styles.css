@@ -36,3 +36,5 @@ button { cursor: pointer; }
 
 .cite { color: inherit; font-size: .75em; vertical-align: super; margin-left: 1px; text-decoration: none; opacity: .7; }
 .cite:hover { opacity: 1; text-decoration: underline; }
+
+.history-empty { display: block; padding: 6px 10px; font-size: 13px; color: #8a929c; }

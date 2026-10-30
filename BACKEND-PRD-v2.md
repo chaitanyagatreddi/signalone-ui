@@ -146,6 +146,11 @@ Lean plan (no Google Cloud project, no service-account key):
 - You do: create the Sheet in your Google account, paste the script I give you (Extensions → Apps Script), click Run once to approve, add the daily trigger.
 - Checked fact that affects this: Kuberns free trial pauses the app after 2 hours. A paused app can't answer the Sheet's daily call. Needs the app running (₹665/month Starter, or a restart before the trigger time) for the schedule to work unattended.
 
+### Speed fix (Fri 30 Oct, ~11:40 PM)
+- Measured one Eventbrite answer, 62.2 s: G2 fetch 33.8 s, Trustpilot 9.8 s, Reddit 2.3 s, OpenAI labelling 13.3 s, summary + gate 3.1 s.
+- Change: `/ask` and MCP `analyze_brand` answer from saved reviews labelled in the last 24 h (only the summary + gate runs). Falls back to full fetch when nothing saved. Daily refresh always fetches fresh. Response has `from_saved` + `fetched_at`.
+- Test (local, saved Eventbrite reviews): 3.2 s, verified=true. Gate tests still pass.
+
 ### M3 — Wire UI: DONE LOCALLY (Fri 30 Oct), not deployed
 - `src/main.jsx`: `send()` now POSTs {question, brand, source} to `${VITE_API_URL}/ask` (dev: Vite proxy to localhost:8765). `Answer` shows the real summary, sentiment, top complaints and reviews; `[n]` in the summary links to review n's URL; "Open ↗" uses the real URL; error line if the call fails; warning if summary not verified.
 - Local run: agent via preview config `signalone-agent` (venv python + uvicorn, port 8765), UI via `signalone-ui` (port 5210). server.py reads keys from ~/.claude/secrets.zsh locally only.
