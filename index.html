@@ -1,90 +1,13 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#ffffff" />
-  <title>SignalOne — review intelligence</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/src/styles.css" />
-</head>
-<body>
-  <div class="app-shell">
-    <aside class="sidebar">
-      <div class="brand-lockup"><span class="brand-mark">S</span><span>SignalOne</span></div>
-      <button class="new-chat" id="newChat"><span class="plus">+</span> New chat</button>
-      <div class="history-label">Recent chats</div>
-      <div class="history-list" id="historyList">
-        <button class="history-item active"><span class="history-dot"></span>Eventbrite sentiment overview</button>
-        <button class="history-item"><span class="history-dot"></span>Ticket Tailor support feedback</button>
-        <button class="history-item"><span class="history-dot"></span>Refund complaints by source</button>
-      </div>
-      <div class="sidebar-footer"><div class="avatar">TC</div><div><strong>Ticmint team</strong><span>Workspace</span></div><span class="more">•••</span></div>
-    </aside>
-    <main class="main-panel">
-      <header class="topbar"><div class="mobile-brand"><span class="brand-mark small">S</span> SignalOne</div><div class="status-pill"><span></span> Live review index</div><button class="help">?</button></header>
-      <section class="chat-area" id="chatArea">
-        <div class="empty-state" id="emptyState">
-          <div class="hero-mark"><span class="brand-mark large">S</span></div>
-          <h1>What do you want to know?</h1><p>Ask SignalOne to find the signal in your customer reviews.</p>
-          <div class="example-grid" id="examples">
-            <button class="example-card">What are Eventbrite customers most frustrated by?<span class="arrow">↗</span></button>
-            <button class="example-card">How do users feel about Ticket Tailor support?<span class="arrow">↗</span></button>
-            <button class="example-card">Compare refunds complaints across all sources<span class="arrow">↗</span></button>
-          </div>
-        </div>
-        <div class="thread" id="thread" hidden></div>
-      </section>
-      <div class="composer-wrap">
-        <div class="composer">
-          <div class="controls"><label>Source<select id="source"><option>All sources</option><option>G2</option><option>Capterra</option><option>Trustpilot</option><option>Reddit</option></select></label><span class="control-divider"></span><label>Brand<input id="brand" value="Eventbrite" /></label></div>
-          <div class="message-input"><textarea id="question" placeholder="Ask about your customer reviews…" rows="1"></textarea><button class="send" id="send" aria-label="Send question">↗</button></div>
-        </div>
-        <div class="composer-hint"><span>SignalOne can make mistakes. Review original sources before making decisions.</span><span><kbd>⌘</kbd><kbd>K</kbd> to focus</span></div>
-      </div>
-    </main>
-  </div>
-  <script type="module">
-    const motion = import('https://cdn.jsdelivr.net/npm/motion@12.23.12/+esm').catch(() => null);
-    const examples = [...document.querySelectorAll('.example-card')];
-    const emptyState = document.querySelector('#emptyState');
-    const thread = document.querySelector('#thread');
-    const question = document.querySelector('#question');
-    const source = document.querySelector('#source');
-    const brand = document.querySelector('#brand');
-    const send = document.querySelector('#send');
-    const newChat = document.querySelector('#newChat');
-    const reviews = [
-      ['G2', 'Oct 18, 2026', 'Negative', 'fees', 'red', 'The platform fees are hard to predict until the final checkout step.'],
-      ['Trustpilot', 'Oct 14, 2026', 'Positive', 'UX', 'green', 'Creating an event is straightforward and the dashboard is easy to learn.'],
-      ['Reddit', 'Oct 09, 2026', 'Neutral', 'support', 'grey', 'Support eventually helped, but the first response took a few days.'],
-      ['Capterra', 'Sep 28, 2026', 'Negative', 'payouts', 'red', 'Payout timing is not very clear when an event has been refunded.']
-    ];
-    const esc = (value) => value.replace(/[&<>"']/g, (char) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#039;' }[char]));
-    function answerMarkup() {
-      const activeSource = source.value;
-      const activeBrand = brand.value || 'your brand';
-      const summary = `Across ${activeSource === 'All sources' ? 'the review sources' : activeSource} for ${activeBrand}, customers are generally positive about the core experience. The clearest friction is around fees and how quickly support resolves issues.`;
-      return `<div class="answer"><div class="answer-head"><span class="assistant-mark">S</span><span>SignalOne</span><span class="answer-time">Just now</span></div><p class="summary" id="summary"></p><div class="sentiment-row"><span class="sentiment positive">72% positive</span><span class="sentiment neutral">18% neutral</span><span class="sentiment negative">10% negative</span></div><div class="section-label">Top complaints</div><div class="complaints"><div><span class="complaint-name">Fees</span><span class="complaint-share">31% of negative reviews</span><div class="bar"><i style="width:31%"></i></div></div><div><span class="complaint-name">Support</span><span class="complaint-share">24% of negative reviews</span><div class="bar"><i style="width:24%"></i></div></div><div><span class="complaint-name">Payouts</span><span class="complaint-share">16% of negative reviews</span><div class="bar"><i style="width:16%"></i></div></div></div><div class="section-label reviews-label">Reviews <span>4 matched</span></div><div class="review-list">${reviews.map(([site, date, sentiment, tag, color, text]) => `<div class="review"><div class="review-meta"><span class="review-source">${site}</span><span>${date}</span><span class="review-sentiment ${color}">${sentiment}</span><span class="tag">${tag}</span><a href="#source">Open ↗</a></div><p>“${text}”</p></div>`).join('')}</div></div>`;
-    }
-    async function animateIn(elements) { const api = await motion; if (api?.animate) api.animate(elements, { opacity: [0, 1], y: [10, 0] }, { duration: .35, delay: .05, easing: 'ease-out' }); }
-    function addMessage(text) {
-      if (!text.trim() || send.disabled) return;
-      emptyState.hidden = true; thread.hidden = false; question.value = ''; send.disabled = true;
-      document.querySelector('#chatArea').classList.add('has-messages');
-      thread.insertAdjacentHTML('beforeend', `<div class="message-row user"><div class="user-bubble">${esc(text)}</div></div><div class="message-row assistant"><div class="answer loading-card"><div class="skeleton title-sk"></div><div class="skeleton line-sk"></div><div class="skeleton line-sk short"></div></div></div><div class="progress-note"><span class="pulse"></span> Fetching reviews <span class="progress-sep">→</span> Scoring…</div>`);
-      animateIn(thread.lastElementChild);
-      setTimeout(() => { const loaders = thread.querySelectorAll('.loading-card'); const loader = loaders[loaders.length - 1]; if (loader) loader.outerHTML = answerMarkup(); const notes = thread.querySelectorAll('.progress-note'); notes[notes.length - 1]?.remove(); const summary = thread.querySelectorAll('#summary'); const current = summary[summary.length - 1]; const copy = current?.parentElement ? current.parentElement.querySelector('#summary') : null; let index = 0; const text = `Across ${source.value === 'All sources' ? 'the review sources' : source.value} for ${brand.value || 'your brand'}, customers are generally positive about the core experience. The clearest friction is around fees and how quickly support resolves issues.`; const timer = setInterval(() => { if (!copy) return clearInterval(timer); copy.textContent = text.slice(0, ++index) + (index < text.length ? '▌' : ''); if (index >= text.length) clearInterval(timer); }, 16); send.disabled = false; animateIn(thread.lastElementChild); }, 1500);
-    }
-    examples.forEach((button) => button.addEventListener('click', () => { question.value = button.firstChild.textContent; question.focus(); }));
-    send.addEventListener('click', () => addMessage(question.value));
-    question.addEventListener('keydown', (event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); addMessage(question.value); } });
-    newChat.addEventListener('click', () => { thread.innerHTML = ''; thread.hidden = true; emptyState.hidden = false; question.value = ''; });
-    document.querySelectorAll('.history-item').forEach((item) => item.addEventListener('click', () => { document.querySelectorAll('.history-item').forEach((entry) => entry.classList.remove('active')); item.classList.add('active'); question.value = item.textContent.trim(); question.focus(); }));
-    document.addEventListener('keydown', (event) => { if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); question.focus(); } });
-    animateIn(document.querySelectorAll('.empty-state, .sidebar, .composer'));
-  </script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#ffffff" />
+    <title>SignalOne — review intelligence</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>

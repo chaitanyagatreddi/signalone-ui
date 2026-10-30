@@ -4,6 +4,19 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "build": "echo 'SignalOne static build ready'"
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@tiptap/core": "^3.8.0",
+    "@tiptap/extension-document": "^3.8.0",
+    "@tiptap/extension-paragraph": "^3.8.0",
+    "@tiptap/extension-text": "^3.8.0",
+    "@tiptap/react": "^3.8.0",
+    "@vitejs/plugin-react": "^6.0.0",
+    "motion": "^13.2.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "vite": "^8.0.0"
   }
 }
