@@ -151,6 +151,13 @@ Lean plan (no Google Cloud project, no service-account key):
 - Change: `/ask` and MCP `analyze_brand` answer from saved reviews labelled in the last 24 h (only the summary + gate runs). Falls back to full fetch when nothing saved. Daily refresh always fetches fresh. Response has `from_saved` + `fetched_at`.
 - Test (local, saved Eventbrite reviews): 3.2 s, verified=true. Gate tests still pass.
 
+### Fri 30 Oct, late — website live + fixes
+- Live site https://signalone-ui.vercel.app now built from GitHub chaitanyagatreddi/signalone-ui (private), VITE_API_URL = Render agent. Answered Eventbrite live (37 reviews), saved to Recent chats; repeat question 8 s.
+- Vercel Git build fixes: removed vercel.json ("public" not allowed), rebuilt package-lock.json (5 packages were links into ../gohook-landing-backup).
+- Saved searches: kept in the browser (localStorage), reopen from Recent chats.
+- Brand fix (committed, not pushed when logged): brand named in the question wins over the Brand box. Tested locally: Ticket Tailor example switches the box from Eventbrite to Ticket Tailor.
+- Sheet: script merges, never clears (after a Render redeploy emptied it once).
+
 ### M3 — Wire UI: DONE LOCALLY (Fri 30 Oct), not deployed
 - `src/main.jsx`: `send()` now POSTs {question, brand, source} to `${VITE_API_URL}/ask` (dev: Vite proxy to localhost:8765). `Answer` shows the real summary, sentiment, top complaints and reviews; `[n]` in the summary links to review n's URL; "Open ↗" uses the real URL; error line if the call fails; warning if summary not verified.
 - Local run: agent via preview config `signalone-agent` (venv python + uvicorn, port 8765), UI via `signalone-ui` (port 5210). server.py reads keys from ~/.claude/secrets.zsh locally only.
