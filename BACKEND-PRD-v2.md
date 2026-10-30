@@ -131,6 +131,21 @@ Brief: "At least one custom MCP server, written by you ... doing real work." Dec
   4. `get_review(id)` — one review with its source URL (for citations).
 - Done when: an MCP client lists the 4 tools and `analyze_brand("Eventbrite")` returns a verified answer; `search_reviews` then returns the saved reviews.
 
+### M2.7 — Google Sheet that updates itself (hard constraint 2): LIVE (Fri 30 Oct, 11:11 PM)
+- Apps Script project "Signalone-ticmint" in your Google account, code = `signalone-agent/sheet.gs`, API = https://signalone-agent.onrender.com.
+- setupTriggers ran 11:11:19–11:11:20 PM (no errors): startRefresh daily ~1 AM, writeSheet every 10 min.
+- writeSheet ran 11:11:51 PM → log "wrote 37 rows" into the Reviews tab.
+- Not yet checked by me: the Sheet itself (needs its link) and that the 10-minute trigger fires on its own.
+Original plan:
+Brief: "results must land in a Google Sheet that refreshes on a schedule without you touching it. A manual export doesn't count."
+Lean plan (no Google Cloud project, no service-account key):
+1. Agent: new endpoint `GET /sheet-rows` → every saved review as rows: brand, source, date, sentiment, tag, text, url, fetched_at.
+2. Agent: the daily refresh runs `run_agent()` for all 4 brands, then the rows are fresh.
+3. Google Sheet with Apps Script (lives inside the Sheet): `refresh()` calls `/refresh` then `/sheet-rows` and rewrites the "Reviews" tab, stamps `updated_at`.
+4. Apps Script time trigger: runs `refresh()` daily. Google runs it; nobody touches it.
+- You do: create the Sheet in your Google account, paste the script I give you (Extensions → Apps Script), click Run once to approve, add the daily trigger.
+- Checked fact that affects this: Kuberns free trial pauses the app after 2 hours. A paused app can't answer the Sheet's daily call. Needs the app running (₹665/month Starter, or a restart before the trigger time) for the schedule to work unattended.
+
 ### M3 — Wire UI: DONE LOCALLY (Fri 30 Oct), not deployed
 - `src/main.jsx`: `send()` now POSTs {question, brand, source} to `${VITE_API_URL}/ask` (dev: Vite proxy to localhost:8765). `Answer` shows the real summary, sentiment, top complaints and reviews; `[n]` in the summary links to review n's URL; "Open ↗" uses the real URL; error line if the call fails; warning if summary not verified.
 - Local run: agent via preview config `signalone-agent` (venv python + uvicorn, port 8765), UI via `signalone-ui` (port 5210). server.py reads keys from ~/.claude/secrets.zsh locally only.
@@ -138,4 +153,11 @@ Brief: "At least one custom MCP server, written by you ... doing real work." Dec
 - Trustpilot came back this run (retry added in M2.6 was in place).
 - Known: pressing Enter right after clicking an example card doesn't send (editor not focused); the send button works.
 
-### M4 — Deploy: NOT STARTED (needs you: GitHub repo + Kuberns connect + keys)
+### M4 — Deploy: AGENT LIVE ON RENDER (Fri 30 Oct, ~11 PM)
+- Repo: github.com/chaitanyagatreddi/signalone-agent (private). Commits: cb628e7 agent+MCP, de0678e key-name aliases, bd4dbd3 Sheet endpoints + sheet.gs, a99f1ad pin Python 3.12 + tested versions.
+- Kuberns tried first: live at signalone-agent-main-4697b21.kuberns.cloud and answered with keys, but trial = 2 deploys/day + pauses after 2 h. Moved to Render free.
+- Render: https://signalone-agent.onrender.com — start `uvicorn server:app --host 0.0.0.0 --port $PORT`, keys imported from .env with exact names.
+- Render first build used Python 3.14 → pip pulled crewai 0.11.2 and mcp 2.3.0. Fixed with `.python-version` = 3.12 and pinned requirements.
+- Live test: /health 200; MCP tools/list → 4 tools; /ask Eventbrite → verified=true, no source errors, 37 reviews (Trustpilot 20, G2 10, Reddit 7), 57/16/27; /sheet-rows → 37 rows.
+- `/` returns Not Found by design (no page there).
+- Not done: UI not yet pointed at Render (VITE_API_URL); Google Sheet not created (sheet.gs needs the Render URL + your setup).

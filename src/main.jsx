@@ -13,6 +13,46 @@ const API = import.meta.env.VITE_API_URL || '';
 const sentimentColor = { positive: 'green', neutral: 'grey', negative: 'red' };
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
+// WebMCP: while this page is open, browser AI agents can call these tools (Chrome, flag or origin trial).
+// Format from developer.chrome.com/docs/ai/webmcp/imperative-api. No-op where WebMCP isn't available.
+function useWebMCP() {
+  useEffect(() => {
+    const mc = document.modelContext;
+    if (!mc?.registerTool) return;
+    const controller = new AbortController();
+    const brands = ['Eventbrite', 'Ticket Tailor', 'Townscript', 'BookMyShow'];
+    mc.registerTool({
+      name: 'analyze_reviews',
+      description: 'Fetch fresh G2, Trustpilot and Reddit reviews for a ticketing brand and return a verified sentiment answer with review links. Takes about a minute.',
+      inputSchema: { type: 'object', properties: {
+        brand: { type: 'string', enum: brands },
+        source: { type: 'string', enum: ['All sources', 'G2', 'Trustpilot', 'Reddit'] },
+        question: { type: 'string', description: 'What to ask about the reviews' },
+      }, required: ['brand'] },
+      annotations: { readOnlyHint: true, untrustedContentHint: true },
+      execute: async ({ brand, source = 'All sources', question = '' }, { signal } = {}) => {
+        const res = await fetch(`${API}/ask`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ brand, source, question }), signal });
+        const d = await res.json();
+        if (!res.ok) return `Error: ${d.error || res.status}`;
+        const cites = d.reviews.map((r, i) => `[${i + 1}] ${r.source} ${r.sentiment} ${r.tag}: ${r.url}`).join('\n');
+        return `${d.summary}\n\nSentiment %: ${JSON.stringify(d.sentiment)}\nTop complaints: ${JSON.stringify(d.complaints)}\nVerified: ${d.verified}\n\nReviews:\n${cites}`;
+      },
+    }, { signal: controller.signal });
+    mc.registerTool({
+      name: 'get_saved_reviews',
+      description: 'Return reviews already saved by SignalOne (same data as the Google Sheet), optionally for one brand.',
+      inputSchema: { type: 'object', properties: { brand: { type: 'string', enum: brands } } },
+      annotations: { readOnlyHint: true, untrustedContentHint: true },
+      execute: async ({ brand } = {}, { signal } = {}) => {
+        const d = await (await fetch(`${API}/sheet-rows`, { signal })).json();
+        const rows = d.rows.filter((r) => !brand || r[0] === brand);
+        return JSON.stringify({ columns: d.columns, count: rows.length, rows: rows.slice(0, 50) });
+      },
+    }, { signal: controller.signal });
+    return () => controller.abort();
+  }, []);
+}
+
 // Turns "...fees [3][7]." into text with citation links to the cited reviews.
 function Cited({ text, reviews }) {
   return text.split(/(\[\d+\])/).map((part, i) => {
@@ -45,6 +85,7 @@ function Answer({ loading, data, error }) {
 }
 
 function App() {
+  useWebMCP();
   const [source, setSource] = useState('All sources'); const [brand, setBrand] = useState('Eventbrite'); const [question, setQuestion] = useState(''); const [messages, setMessages] = useState([]); const [loading, setLoading] = useState(false);
   const send = () => { if (!question.trim() || loading) return; const text = question.trim(); setQuestion(''); setMessages((items) => [...items, { role: 'user', text }, { role: 'assistant', loading: true }]); setLoading(true); const finish = (patch) => { setMessages((items) => items.map((item, index) => index === items.length - 1 ? { ...item, loading: false, ...patch } : item)); setLoading(false); }; fetch(`${API}/ask`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: text, brand, source }) }).then(async (res) => { const body = await res.json(); if (!res.ok) throw new Error(body.error || `HTTP ${res.status}`); finish({ data: body }); }).catch((e) => finish({ error: e.message })); };
   const reset = () => { setMessages([]); setQuestion(''); };
