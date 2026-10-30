@@ -13,7 +13,7 @@ Use this as the board structure for the first product workshop. Each `##` is a f
 ## Frame 2 — End-to-end user flow
 
 1. User opens SignalOne.
-2. User chooses `All sources`, G2, Capterra, Trustpilot, or Reddit.
+2. User chooses `All sources`, G2, Reddit, or Trustpilot.
 3. User enters a brand.
 4. User asks a natural-language question.
 5. UI shows `Fetching reviews…`.
@@ -47,7 +47,6 @@ flowchart LR
   UI[React chat UI] --> API[Question endpoint]
   API --> FETCH[Source fetchers]
   FETCH --> G2[G2 via ZenRows]
-  FETCH --> CAP[Capterra via ZenRows]
   FETCH --> TP[Trustpilot via ZenRows]
   FETCH --> RED[Reddit via FetchLayer]
   FETCH --> LABEL[gpt-4o-mini labels]
